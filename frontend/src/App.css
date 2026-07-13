@@ -1,0 +1,286 @@
+#root {
+  min-height: 100vh;
+}
+
+.pagina {
+  width: min(1100px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.cabecalho {
+  margin-bottom: 28px;
+}
+
+.cabecalho h1 {
+  margin: 8px 0;
+  font-size: 2.5rem;
+}
+
+.cabecalho p {
+  margin: 0;
+  color: #64748b;
+}
+
+.etiqueta {
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cartao {
+  margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+}
+
+.cartao h2 {
+  margin-top: 0;
+}
+
+.formulario {
+  display: grid;
+  grid-template-columns: 1fr 180px auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.formulario label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+input,
+select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.botao-excluir {
+  min-height: 36px;
+  background: #dc2626;
+}
+
+.mensagem {
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.titulo-lista {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.tabela-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+th {
+  color: #475569;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+@media (max-width: 700px) {
+  .formulario {
+    grid-template-columns: 1fr;
+  }
+
+  .titulo-lista {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+.menu-principal {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.menu-conteudo {
+  width: min(1100px, calc(100% - 32px));
+  min-height: 68px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.nome-sistema {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.menu-conteudo nav {
+  display: flex;
+  gap: 8px;
+}
+
+.menu-link {
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #475569;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.menu-link:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.menu-link.ativo {
+  background: #2563eb;
+  color: white;
+}
+
+@media (max-width: 600px) {
+  .menu-conteudo {
+    padding: 12px 0;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .menu-conteudo nav {
+    width: 100%;
+    overflow-x: auto;
+  }
+}
+.formulario-transacao {
+  grid-template-columns: 2fr 150px 150px 1.5fr auto;
+}
+
+.tipo {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.tipo.receita {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.tipo.despesa {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+@media (max-width: 900px) {
+  .formulario-transacao {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .formulario-transacao {
+    grid-template-columns: 1fr;
+  }
+}
+
+.resumo-geral {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cartao-resumo {
+  display: grid;
+  gap: 8px;
+  padding: 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+}
+
+.cartao-resumo span {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.cartao-resumo strong {
+  font-size: 1.7rem;
+}
+
+.valor-receita {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.valor-despesa {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+@media (max-width: 800px) {
+  .resumo-geral {
+    grid-template-columns: 1fr;
+  }
+}
+.mensagem {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.mensagem.sucesso {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+}
+
+.mensagem.erro {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}

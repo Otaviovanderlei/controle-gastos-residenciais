@@ -1,0 +1,21 @@
+# Visual Studio e .NET
+.vs/
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# Banco local e arquivos temporários do SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# React / Node
+**/node_modules/
+**/dist/
+**/.env
+*.local
+
+# Sistema e editor
+.DS_Store
+Thumbs.db
