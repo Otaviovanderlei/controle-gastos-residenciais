@@ -1,27 +1,22 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import axios from "axios";
 
-import { api } from "../api/api";
+import { pessoasService } from "../services/pessoasService";
+import { transacoesService } from "../services/transacoesService";
+import type { MensagemFeedback } from "../types/Mensagem";
 import type { Pessoa } from "../types/Pessoa";
 import {
   TipoTransacao,
   type CriarTransacao,
   type Transacao,
 } from "../types/Transacao";
-
-async function buscarPessoas(): Promise<Pessoa[]> {
-  const resposta = await api.get<Pessoa[]>("/pessoas");
-  return resposta.data;
-}
-
-async function buscarTransacoes(): Promise<Transacao[]> {
-  const resposta = await api.get<Transacao[]>("/transacoes");
-  return resposta.data;
-}
+import { formatarMoeda } from "../utils/formatarMoeda";
 
 export function TransacoesPage() {
-  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
+  const [transacoes, setTransacoes] = useState<
+    Transacao[]
+  >([]);
+
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
 
   const [descricao, setDescricao] = useState("");
@@ -31,141 +26,170 @@ export function TransacoesPage() {
   );
   const [pessoaId, setPessoaId] = useState("");
 
-  const [mensagem, setMensagem] = useState("");
-  const [tipoMensagem, setTipoMensagem] = useState<
-  "sucesso" | "erro" | ""
->("");
-  const [carregando, setCarregando] = useState(true);
+  const [mensagem, setMensagem] =
+    useState<MensagemFeedback | null>(null);
+
+  const [carregandoPagina, setCarregandoPagina] =
+    useState(true);
+
+  const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
     let componenteAtivo = true;
 
-    Promise.all([buscarPessoas(), buscarTransacoes()])
-      .then(([pessoasRecebidas, transacoesRecebidas]) => {
+    async function carregarDados() {
+      try {
+        const [
+          pessoasRecebidas,
+          transacoesRecebidas,
+        ] = await Promise.all([
+          pessoasService.listar(),
+          transacoesService.listar(),
+        ]);
+
         if (!componenteAtivo) {
           return;
         }
 
         setPessoas(pessoasRecebidas);
         setTransacoes(transacoesRecebidas);
-      })
-     .catch(() => {
-  if (componenteAtivo) {
-    setMensagem("Não foi possível carregar os dados.");
-    setTipoMensagem("erro");
-  }
-})
-      .finally(() => {
+      } catch {
         if (componenteAtivo) {
-          setCarregando(false);
+          setMensagem({
+            texto: "Não foi possível carregar os dados.",
+            tipo: "erro",
+          });
         }
-      });
+      } finally {
+        if (componenteAtivo) {
+          setCarregandoPagina(false);
+        }
+      }
+    }
+
+    void carregarDados();
 
     return () => {
       componenteAtivo = false;
     };
   }, []);
 
-  async function atualizarTransacoes() {
-    const dados = await buscarTransacoes();
-    setTransacoes(dados);
-  }
-
- async function cadastrarTransacao(
-  evento: FormEvent<HTMLFormElement>
-) {
-  evento.preventDefault();
-
-  setMensagem("");
-  setTipoMensagem("");
-
-  const descricaoTratada = descricao.trim();
-  const valorNumerico = Number(valor);
-  const pessoaIdNumerico = Number(pessoaId);
-
-  if (descricaoTratada.length < 2) {
-    setMensagem(
-      "Informe uma descrição com pelo menos 2 caracteres."
-    );
-    setTipoMensagem("erro");
-    return;
-  }
-
-  if (!Number.isFinite(valorNumerico) || valorNumerico <= 0) {
-    setMensagem("Informe um valor maior que zero.");
-    setTipoMensagem("erro");
-    return;
-  }
-
-  if (
-    !Number.isInteger(pessoaIdNumerico) ||
-    pessoaIdNumerico <= 0
+  async function cadastrarTransacao(
+    evento: FormEvent<HTMLFormElement>
   ) {
-    setMensagem("Selecione uma pessoa.");
-    setTipoMensagem("erro");
-    return;
-  }
+    evento.preventDefault();
+    setMensagem(null);
 
-  const novaTransacao: CriarTransacao = {
-    descricao: descricaoTratada,
-    valor: valorNumerico,
-    tipo,
-    pessoaId: pessoaIdNumerico,
-  };
+    const descricaoTratada = descricao.trim();
+    const valorNumerico = Number(valor);
+    const pessoaIdNumerico = Number(pessoaId);
 
-  try {
-    setCarregando(true);
+    if (descricaoTratada.length < 2) {
+      setMensagem({
+        texto:
+          "Informe uma descrição com pelo menos 2 caracteres.",
+        tipo: "erro",
+      });
 
-    await api.post("/transacoes", novaTransacao);
-
-    setDescricao("");
-    setValor("");
-    setTipo(TipoTransacao.Despesa);
-    setPessoaId("");
-
-    setMensagem("Transação cadastrada com sucesso.");
-    setTipoMensagem("sucesso");
-
-    await atualizarTransacoes();
-  } catch (erro) {
-    if (axios.isAxiosError(erro)) {
-      const mensagemApi = erro.response?.data?.mensagem;
-
-      setMensagem(
-        mensagemApi ?? "Não foi possível cadastrar a transação."
-      );
-    } else {
-      setMensagem("Não foi possível cadastrar a transação.");
+      return;
     }
 
-    setTipoMensagem("erro");
-  } finally {
-    setCarregando(false);
-  }
-}
+    if (
+      valor.trim() === "" ||
+      !Number.isFinite(valorNumerico) ||
+      valorNumerico <= 0
+    ) {
+      setMensagem({
+        texto: "Informe um valor maior que zero.",
+        tipo: "erro",
+      });
 
-  function formatarMoeda(valorRecebido: number) {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(valorRecebido);
+      return;
+    }
+
+    if (
+      pessoaId.trim() === "" ||
+      !Number.isInteger(pessoaIdNumerico) ||
+      pessoaIdNumerico <= 0
+    ) {
+      setMensagem({
+        texto: "Selecione uma pessoa.",
+        tipo: "erro",
+      });
+
+      return;
+    }
+
+    const novaTransacao: CriarTransacao = {
+      descricao: descricaoTratada,
+      valor: valorNumerico,
+      tipo,
+      pessoaId: pessoaIdNumerico,
+    };
+
+    try {
+      setEnviando(true);
+
+      const transacaoCriada =
+        await transacoesService.criar(novaTransacao);
+
+      setTransacoes((transacoesAtuais) => [
+        transacaoCriada,
+        ...transacoesAtuais,
+      ]);
+
+      setDescricao("");
+      setValor("");
+      setTipo(TipoTransacao.Despesa);
+      setPessoaId("");
+
+      setMensagem({
+        texto: "Transação cadastrada com sucesso.",
+        tipo: "sucesso",
+      });
+    } catch (erro) {
+      setMensagem({
+        texto:
+          erro instanceof Error
+            ? erro.message
+            : "Não foi possível cadastrar a transação.",
+        tipo: "erro",
+      });
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  function limparMensagem() {
+    setMensagem(null);
   }
 
   return (
     <main className="pagina">
       <header className="cabecalho">
         <div>
-          <span className="etiqueta">Controle residencial</span>
+          <span className="etiqueta">
+            Controle residencial
+          </span>
+
           <h1>Transações</h1>
-          <p>Cadastre receitas e despesas das pessoas.</p>
+
+          <p>
+            Cadastre receitas e despesas das pessoas.
+          </p>
         </div>
       </header>
 
       <section className="cartao">
         <h2>Nova transação</h2>
 
-        {pessoas.length === 0 ? (
-          <p>Cadastre pelo menos uma pessoa antes de criar uma transação.</p>
+        {carregandoPagina ? (
+          <p>Carregando dados...</p>
+        ) : pessoas.length === 0 ? (
+          <p>
+            Cadastre pelo menos uma pessoa antes de criar
+            uma transação.
+          </p>
         ) : (
           <form
             className="formulario formulario-transacao"
@@ -174,13 +198,13 @@ export function TransacoesPage() {
           >
             <label>
               Descrição
+
               <input
                 type="text"
                 value={descricao}
                 onChange={(evento) => {
                   setDescricao(evento.target.value);
-                  setMensagem("");
-                  setTipoMensagem("");
+                  limparMensagem();
                 }}
                 placeholder="Ex.: Conta de internet"
                 maxLength={200}
@@ -189,13 +213,13 @@ export function TransacoesPage() {
 
             <label>
               Valor
+
               <input
                 type="number"
                 value={valor}
                 onChange={(evento) => {
                   setValor(evento.target.value);
-                  setMensagem("");
-                  setTipoMensagem("");
+                  limparMensagem();
                 }}
                 placeholder="0,00"
                 min="0.01"
@@ -205,55 +229,83 @@ export function TransacoesPage() {
 
             <label>
               Tipo
+
               <select
                 value={tipo}
                 onChange={(evento) => {
-                  setTipo(Number(evento.target.value) as TipoTransacao);
-                  setMensagem("");
-                  setTipoMensagem("");
+                  setTipo(
+                    Number(
+                      evento.target.value
+                    ) as TipoTransacao
+                  );
+
+                  limparMensagem();
                 }}
               >
-                <option value={TipoTransacao.Despesa}>Despesa</option>
-                <option value={TipoTransacao.Receita}>Receita</option>
+                <option value={TipoTransacao.Despesa}>
+                  Despesa
+                </option>
+
+                <option value={TipoTransacao.Receita}>
+                  Receita
+                </option>
               </select>
             </label>
 
             <label>
               Pessoa
+
               <select
                 value={pessoaId}
                 onChange={(evento) => {
                   setPessoaId(evento.target.value);
-                  setMensagem("");
-                  setTipoMensagem("");
+                  limparMensagem();
                 }}
               >
                 <option value="">Selecione</option>
 
                 {pessoas.map((pessoa) => (
-                  <option key={pessoa.id} value={pessoa.id}>
+                  <option
+                    key={pessoa.id}
+                    value={pessoa.id}
+                  >
                     {pessoa.nome} — {pessoa.idade} anos
                   </option>
                 ))}
               </select>
             </label>
 
-            <button type="submit" disabled={carregando}>
-              {carregando ? "Aguarde..." : "Cadastrar"}
+            <button type="submit" disabled={enviando}>
+              {enviando
+                ? "Cadastrando..."
+                : "Cadastrar"}
             </button>
           </form>
         )}
 
-        {mensagem && <p className={`mensagem ${tipoMensagem}`}>{mensagem}</p>}
+        {mensagem && (
+          <p
+            className={`mensagem ${mensagem.tipo}`}
+            role={
+              mensagem.tipo === "erro"
+                ? "alert"
+                : "status"
+            }
+            aria-live="polite"
+          >
+            {mensagem.texto}
+          </p>
+        )}
       </section>
 
       <section className="cartao">
         <div className="titulo-lista">
           <h2>Transações cadastradas</h2>
+
           <span>{transacoes.length} registro(s)</span>
         </div>
 
-        {carregando && transacoes.length === 0 ? (
+        {carregandoPagina ? (
           <p>Carregando...</p>
         ) : transacoes.length === 0 ? (
           <p>Nenhuma transação cadastrada.</p>
@@ -274,22 +326,30 @@ export function TransacoesPage() {
                 {transacoes.map((transacao) => (
                   <tr key={transacao.id}>
                     <td>#{transacao.id}</td>
+
                     <td>{transacao.descricao}</td>
+
                     <td>{transacao.pessoaNome}</td>
+
                     <td>
                       <span
                         className={
-                          transacao.tipo === TipoTransacao.Receita
+                          transacao.tipo ===
+                          TipoTransacao.Receita
                             ? "tipo receita"
                             : "tipo despesa"
                         }
                       >
-                        {transacao.tipo === TipoTransacao.Receita
+                        {transacao.tipo ===
+                        TipoTransacao.Receita
                           ? "Receita"
                           : "Despesa"}
                       </span>
                     </td>
-                    <td>{formatarMoeda(transacao.valor)}</td>
+
+                    <td>
+                      {formatarMoeda(transacao.valor)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

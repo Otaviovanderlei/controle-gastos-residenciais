@@ -1,153 +1,185 @@
 import { useEffect, useState } from "react";
 
-import { api } from "../api/api";
+import { totaisService } from "../services/totaisService";
+import type { MensagemFeedback } from "../types/Mensagem";
 import type { ConsultaTotais } from "../types/Totais";
-
-async function buscarTotais(): Promise<ConsultaTotais> {
-  const resposta = await api.get<ConsultaTotais>("/totais");
-  return resposta.data;
-}
-
-function formatarMoeda(valor: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(valor);
-}
+import { formatarMoeda } from "../utils/formatarMoeda";
 
 export function TotaisPage() {
-  const [totais, setTotais] = useState<ConsultaTotais | null>(null);
-  const [carregando, setCarregando] = useState(true);
-  const [mensagem, setMensagem] = useState("");
+  const [totais, setTotais] =
+    useState<ConsultaTotais | null>(null);
+
+  const [mensagem, setMensagem] =
+    useState<MensagemFeedback | null>(null);
+
+  const [carregandoPagina, setCarregandoPagina] =
+    useState(true);
 
   useEffect(() => {
     let componenteAtivo = true;
 
-    buscarTotais()
-      .then((dados) => {
+    async function carregarTotais() {
+      try {
+        const dados = await totaisService.consultar();
+
         if (componenteAtivo) {
           setTotais(dados);
         }
-      })
-      .catch(() => {
+      } catch {
         if (componenteAtivo) {
-          setMensagem("Não foi possível carregar os totais.");
+          setMensagem({
+            texto:
+              "Não foi possível carregar os totais.",
+            tipo: "erro",
+          });
         }
-      })
-      .finally(() => {
+      } finally {
         if (componenteAtivo) {
-          setCarregando(false);
+          setCarregandoPagina(false);
         }
-      });
+      }
+    }
+
+    void carregarTotais();
 
     return () => {
       componenteAtivo = false;
     };
   }, []);
 
-  if (carregando) {
-    return (
-      <main className="pagina">
-        <p>Carregando totais...</p>
-      </main>
-    );
-  }
-
-  if (!totais) {
-    return (
-      <main className="pagina">
-        <p className="mensagem">{mensagem}</p>
-      </main>
-    );
-  }
-
   return (
     <main className="pagina">
       <header className="cabecalho">
         <div>
-          <span className="etiqueta">Controle residencial</span>
+          <span className="etiqueta">
+            Controle residencial
+          </span>
+
           <h1>Totais</h1>
-          <p>Resumo financeiro por pessoa e total geral.</p>
+
+          <p>
+            Resumo financeiro por pessoa e total geral.
+          </p>
         </div>
       </header>
 
-      <section className="resumo-geral">
-        <article className="cartao-resumo">
-          <span>Receitas gerais</span>
-          <strong className="valor-receita">
-            {formatarMoeda(totais.totalGeralReceitas)}
-          </strong>
-        </article>
-
-        <article className="cartao-resumo">
-          <span>Despesas gerais</span>
-          <strong className="valor-despesa">
-            {formatarMoeda(totais.totalGeralDespesas)}
-          </strong>
-        </article>
-
-        <article className="cartao-resumo">
-          <span>Saldo líquido</span>
-          <strong
-            className={
-              totais.saldoLiquidoGeral >= 0
-                ? "valor-receita"
-                : "valor-despesa"
-            }
+      {mensagem && (
+        <section className="cartao">
+          <p
+            className={`mensagem ${mensagem.tipo}`}
+            role="alert"
+            aria-live="polite"
           >
-            {formatarMoeda(totais.saldoLiquidoGeral)}
-          </strong>
-        </article>
-      </section>
+            {mensagem.texto}
+          </p>
+        </section>
+      )}
 
-      <section className="cartao">
-        <div className="titulo-lista">
-          <h2>Totais por pessoa</h2>
-          <span>{totais.pessoas.length} registro(s)</span>
-        </div>
+      {carregandoPagina ? (
+        <section className="cartao">
+          <p>Carregando totais...</p>
+        </section>
+      ) : totais ? (
+        <>
+          <section className="resumo-geral">
+            <article className="cartao-total">
+              <span>Receitas gerais</span>
 
-        {totais.pessoas.length === 0 ? (
-          <p>Nenhuma pessoa cadastrada.</p>
-        ) : (
-          <div className="tabela-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nome</th>
-                  <th>Receitas</th>
-                  <th>Despesas</th>
-                  <th>Saldo</th>
-                </tr>
-              </thead>
+              <strong className="valor-receita">
+                {formatarMoeda(
+                  totais.totalGeralReceitas
+                )}
+              </strong>
+            </article>
 
-              <tbody>
-                {totais.pessoas.map((pessoa) => (
-                  <tr key={pessoa.pessoaId}>
-                    <td>#{pessoa.pessoaId}</td>
-                    <td>{pessoa.nome}</td>
-                    <td className="valor-receita">
-                      {formatarMoeda(pessoa.totalReceitas)}
-                    </td>
-                    <td className="valor-despesa">
-                      {formatarMoeda(pessoa.totalDespesas)}
-                    </td>
-                    <td
-                      className={
-                        pessoa.saldo >= 0
-                          ? "valor-receita"
-                          : "valor-despesa"
-                      }
-                    >
-                      {formatarMoeda(pessoa.saldo)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+            <article className="cartao-total">
+              <span>Despesas gerais</span>
+
+              <strong className="valor-despesa">
+                {formatarMoeda(
+                  totais.totalGeralDespesas
+                )}
+              </strong>
+            </article>
+
+            <article className="cartao-total">
+              <span>Saldo líquido</span>
+
+              <strong
+                className={
+                  totais.saldoLiquidoGeral >= 0
+                    ? "valor-receita"
+                    : "valor-despesa"
+                }
+              >
+                {formatarMoeda(
+                  totais.saldoLiquidoGeral
+                )}
+              </strong>
+            </article>
+          </section>
+
+          <section className="cartao">
+            <div className="titulo-lista">
+              <h2>Totais por pessoa</h2>
+
+              <span>
+                {totais.pessoas.length} registro(s)
+              </span>
+            </div>
+
+            {totais.pessoas.length === 0 ? (
+              <p>Nenhuma pessoa cadastrada.</p>
+            ) : (
+              <div className="tabela-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nome</th>
+                      <th>Receitas</th>
+                      <th>Despesas</th>
+                      <th>Saldo</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {totais.pessoas.map((pessoa) => (
+                      <tr key={pessoa.pessoaId}>
+                        <td>#{pessoa.pessoaId}</td>
+
+                        <td>{pessoa.nome}</td>
+
+                        <td className="valor-receita">
+                          {formatarMoeda(
+                            pessoa.totalReceitas
+                          )}
+                        </td>
+
+                        <td className="valor-despesa">
+                          {formatarMoeda(
+                            pessoa.totalDespesas
+                          )}
+                        </td>
+
+                        <td
+                          className={
+                            pessoa.saldo >= 0
+                              ? "valor-receita"
+                              : "valor-despesa"
+                          }
+                        >
+                          {formatarMoeda(pessoa.saldo)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </>
+      ) : null}
     </main>
   );
 }

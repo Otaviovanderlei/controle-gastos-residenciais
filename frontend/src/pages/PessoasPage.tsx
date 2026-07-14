@@ -1,79 +1,86 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
-import { api } from "../api/api";
+import { pessoasService } from "../services/pessoasService";
+import type { MensagemFeedback } from "../types/Mensagem";
 import type { CriarPessoa, Pessoa } from "../types/Pessoa";
-
-async function buscarPessoas(): Promise<Pessoa[]> {
-  const resposta = await api.get<Pessoa[]>("/pessoas");
-  return resposta.data;
-}
 
 export function PessoasPage() {
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [nome, setNome] = useState("");
   const [idade, setIdade] = useState("");
-  const [mensagem, setMensagem] = useState("");
-  const [tipoMensagem, setTipoMensagem] = useState<
-    "sucesso" | "erro" | ""
-  >("");
-  const [carregando, setCarregando] = useState(true);
+
+  const [mensagem, setMensagem] =
+    useState<MensagemFeedback | null>(null);
+
+  const [carregandoPagina, setCarregandoPagina] =
+    useState(true);
+
+  const [enviando, setEnviando] = useState(false);
+
+  const [excluindoId, setExcluindoId] =
+    useState<number | null>(null);
 
   useEffect(() => {
     let componenteAtivo = true;
 
-    buscarPessoas()
-      .then((dados) => {
+    async function carregar() {
+      try {
+        const dados = await pessoasService.listar();
+
         if (componenteAtivo) {
           setPessoas(dados);
         }
-      })
-      .catch(() => {
+      } catch {
         if (componenteAtivo) {
-          setMensagem("Não foi possível carregar as pessoas.");
-          setTipoMensagem("erro");
+          setMensagem({
+            texto: "Não foi possível carregar as pessoas.",
+            tipo: "erro",
+          });
         }
-      })
-      .finally(() => {
+      } finally {
         if (componenteAtivo) {
-          setCarregando(false);
+          setCarregandoPagina(false);
         }
-      });
+      }
+    }
+
+    void carregar();
 
     return () => {
       componenteAtivo = false;
     };
   }, []);
 
-  async function carregarPessoas() {
-    const dados = await buscarPessoas();
-    setPessoas(dados);
-  }
-
   async function cadastrarPessoa(
     evento: FormEvent<HTMLFormElement>
   ) {
     evento.preventDefault();
-
-    setMensagem("");
-    setTipoMensagem("");
+    setMensagem(null);
 
     const nomeTratado = nome.trim();
     const idadeNumerica = Number(idade);
 
     if (nomeTratado.length < 2) {
-      setMensagem("Informe um nome com pelo menos 2 caracteres.");
-      setTipoMensagem("erro");
+      setMensagem({
+        texto: "Informe um nome com pelo menos 2 caracteres.",
+        tipo: "erro",
+      });
+
       return;
     }
 
     if (
+      idade.trim() === "" ||
       !Number.isInteger(idadeNumerica) ||
       idadeNumerica < 0 ||
       idadeNumerica > 130
     ) {
-      setMensagem("Informe uma idade válida entre 0 e 130 anos.");
-      setTipoMensagem("erro");
+      setMensagem({
+        texto: "Informe uma idade válida entre 0 e 130 anos.",
+        tipo: "erro",
+      });
+
       return;
     }
 
@@ -83,27 +90,36 @@ export function PessoasPage() {
     };
 
     try {
-      setCarregando(true);
+      setEnviando(true);
 
-      await api.post("/pessoas", novaPessoa);
+      const pessoaCriada =
+        await pessoasService.criar(novaPessoa);
+
+      setPessoas((pessoasAtuais) =>
+        [...pessoasAtuais, pessoaCriada].sort((a, b) =>
+          a.nome.localeCompare(b.nome, "pt-BR")
+        )
+      );
 
       setNome("");
       setIdade("");
-      setMensagem("Pessoa cadastrada com sucesso.");
-      setTipoMensagem("sucesso");
 
-      await carregarPessoas();
+      setMensagem({
+        texto: "Pessoa cadastrada com sucesso.",
+        tipo: "sucesso",
+      });
     } catch {
-      setMensagem("Não foi possível cadastrar a pessoa.");
-      setTipoMensagem("erro");
+      setMensagem({
+        texto: "Não foi possível cadastrar a pessoa.",
+        tipo: "erro",
+      });
     } finally {
-      setCarregando(false);
+      setEnviando(false);
     }
   }
 
   async function excluirPessoa(pessoa: Pessoa) {
-    setMensagem("");
-    setTipoMensagem("");
+    setMensagem(null);
 
     const confirmou = window.confirm(
       `Excluir ${pessoa.nome}? Todas as transações dessa pessoa também serão apagadas.`
@@ -114,19 +130,27 @@ export function PessoasPage() {
     }
 
     try {
-      setCarregando(true);
+      setExcluindoId(pessoa.id);
 
-      await api.delete(`/pessoas/${pessoa.id}`);
+      await pessoasService.excluir(pessoa.id);
 
-      setMensagem("Pessoa excluída com sucesso.");
-      setTipoMensagem("sucesso");
+      setPessoas((pessoasAtuais) =>
+        pessoasAtuais.filter(
+          (pessoaAtual) => pessoaAtual.id !== pessoa.id
+        )
+      );
 
-      await carregarPessoas();
+      setMensagem({
+        texto: "Pessoa excluída com sucesso.",
+        tipo: "sucesso",
+      });
     } catch {
-      setMensagem("Não foi possível excluir a pessoa.");
-      setTipoMensagem("erro");
+      setMensagem({
+        texto: "Não foi possível excluir a pessoa.",
+        tipo: "erro",
+      });
     } finally {
-      setCarregando(false);
+      setExcluindoId(null);
     }
   }
 
@@ -134,9 +158,15 @@ export function PessoasPage() {
     <main className="pagina">
       <header className="cabecalho">
         <div>
-          <span className="etiqueta">Controle residencial</span>
+          <span className="etiqueta">
+            Controle residencial
+          </span>
+
           <h1>Pessoas</h1>
-          <p>Cadastre e gerencie as pessoas da residência.</p>
+
+          <p>
+            Cadastre e gerencie as pessoas da residência.
+          </p>
         </div>
       </header>
 
@@ -144,49 +174,57 @@ export function PessoasPage() {
         <h2>Nova pessoa</h2>
 
         <form
-  className="formulario"
-  onSubmit={cadastrarPessoa}
-  noValidate
->
-  <label>
-    Nome
-    <input
-      type="text"
-      value={nome}
-      onChange={(evento) => {
-        setNome(evento.target.value);
-        setMensagem("");
-        setTipoMensagem("");
-      }}
-      placeholder="Digite o nome"
-      maxLength={100}
-    />
-  </label>
+          className="formulario"
+          onSubmit={cadastrarPessoa}
+          noValidate
+        >
+          <label>
+            Nome
 
-  <label>
-    Idade
-    <input
-      type="number"
-      value={idade}
-      onChange={(evento) => {
-        setIdade(evento.target.value);
-        setMensagem("");
-        setTipoMensagem("");
-      }}
-      placeholder="Digite a idade"
-      min={0}
-      max={130}
-    />
-  </label>
+            <input
+              type="text"
+              value={nome}
+              onChange={(evento) => {
+                setNome(evento.target.value);
+                setMensagem(null);
+              }}
+              placeholder="Digite o nome"
+              maxLength={100}
+            />
+          </label>
 
-  <button type="submit" disabled={carregando}>
-    {carregando ? "Aguarde..." : "Cadastrar"}
-  </button>
-</form>
+          <label>
+            Idade
+
+            <input
+              type="number"
+              value={idade}
+              onChange={(evento) => {
+                setIdade(evento.target.value);
+                setMensagem(null);
+              }}
+              placeholder="Digite a idade"
+              min={0}
+              max={130}
+            />
+          </label>
+
+          <button type="submit" disabled={enviando}>
+            {enviando ? "Cadastrando..." : "Cadastrar"}
+          </button>
+        </form>
 
         {mensagem && (
-          <p className={`mensagem ${tipoMensagem}`}>
-            {mensagem}
+          <p
+            className={`mensagem ${mensagem.tipo}`}
+            role={
+              mensagem.tipo === "erro"
+                ? "alert"
+                : "status"
+            }
+            aria-live="polite"
+          >
+            {mensagem.texto}
           </p>
         )}
       </section>
@@ -194,10 +232,11 @@ export function PessoasPage() {
       <section className="cartao">
         <div className="titulo-lista">
           <h2>Pessoas cadastradas</h2>
+
           <span>{pessoas.length} registro(s)</span>
         </div>
 
-        {carregando && pessoas.length === 0 ? (
+        {carregandoPagina ? (
           <p>Carregando...</p>
         ) : pessoas.length === 0 ? (
           <p>Nenhuma pessoa cadastrada.</p>
@@ -219,14 +258,21 @@ export function PessoasPage() {
                     <td>#{pessoa.id}</td>
                     <td>{pessoa.nome}</td>
                     <td>{pessoa.idade} anos</td>
+
                     <td>
                       <button
                         type="button"
                         className="botao-excluir"
-                        onClick={() => excluirPessoa(pessoa)}
-                        disabled={carregando}
+                        onClick={() =>
+                          excluirPessoa(pessoa)
+                        }
+                        disabled={
+                          excluindoId === pessoa.id
+                        }
                       >
-                        Excluir
+                        {excluindoId === pessoa.id
+                          ? "Excluindo..."
+                          : "Excluir"}
                       </button>
                     </td>
                   </tr>
