@@ -1,25 +1,28 @@
-@ControleGastos_Api_HostAddress = http://localhost:5220
+@host = http://localhost:5220
 
 
 ##                                         Pessoas
 
 ### Listar todas as pessoas
 
-GET {{ControleGastos_Api_HostAddress}}/api/pessoas
+GET {{host}}/api/pessoas
 Accept: application/json
+
 
 ### Cadastrar uma pessoa adulta
 
-POST {{ControleGastos_Api_HostAddress}}/api/pessoas
+POST {{host}}/api/pessoas
 Content-Type: application/json
 
 {
   "nome": "Otávio Vanderlei",
   "idade": 21
 }
+
+
 ### Cadastrar uma pessoa menor de idade
 
-POST {{ControleGastos_Api_HostAddress}}/api/pessoas
+POST {{host}}/api/pessoas
 Content-Type: application/json
 
 {
@@ -27,28 +30,37 @@ Content-Type: application/json
   "idade": 16
 }
 
+
 ### Buscar pessoa pelo ID
 
-GET {{ControleGastos_Api_HostAddress}}/api/pessoas/1
+GET {{host}}/api/pessoas/1
 Accept: application/json
+
+
+### Buscar pessoa inexistente
+
+GET {{host}}/api/pessoas/999
+Accept: application/json
+
 
 ### Excluir pessoa pelo ID
 
-DELETE {{ControleGastos_Api_HostAddress}}/api/pessoas/1
+DELETE {{host}}/api/pessoas/1
+Accept: application/json
 
 
-###                                                Transações
+###                                             Transações
 
 
 ### Listar transações
 
-GET {{ControleGastos_Api_HostAddress}}/api/transacoes
+GET {{host}}/api/transacoes
 Accept: application/json
 
 
 ### Cadastrar despesa para pessoa adulta
 
-POST {{ControleGastos_Api_HostAddress}}/api/transacoes
+POST {{host}}/api/transacoes
 Content-Type: application/json
 
 {
@@ -60,7 +72,7 @@ Content-Type: application/json
 
 ### Cadastrar receita para pessoa adulta
 
-POST {{ControleGastos_Api_HostAddress}}/api/transacoes
+POST {{host}}/api/transacoes
 Content-Type: application/json
 
 {
@@ -72,7 +84,7 @@ Content-Type: application/json
 
 ### Cadastrar transação para pessoa inexistente
 
-POST {{ControleGastos_Api_HostAddress}}/api/transacoes
+POST {{host}}/api/transacoes
 Content-Type: application/json
 
 {
@@ -84,7 +96,7 @@ Content-Type: application/json
 
 ### Despesa para pessoa menor - deve permitir
 
-POST {{ControleGastos_Api_HostAddress}}/api/transacoes
+POST {{host}}/api/transacoes
 Content-Type: application/json
 
 {
@@ -96,7 +108,7 @@ Content-Type: application/json
 
 ### Receita para pessoa menor - deve bloquear
 
-POST {{ControleGastos_Api_HostAddress}}/api/transacoes
+POST {{host}}/api/transacoes
 Content-Type: application/json
 
 {
@@ -110,19 +122,19 @@ Content-Type: application/json
 
 ### Consultar totais por pessoa e total geral
 
-GET {{ControleGastos_Api_HostAddress}}/api/totais
+GET {{host}}/api/totais
 Accept: application/json
 
 ### Excluir pessoa com transações
 
-DELETE {{ControleGastos_Api_HostAddress}}/api/pessoas/4
+DELETE {{host}}/api/pessoas/4
 
 ### Conferir se a transação também foi removida
 
-GET {{ControleGastos_Api_HostAddress}}/api/transacoes
-Accept: application/jso
+GET {{host}}/api/transacoes
+Accept: application/json
 
 ### Conferir totais após exclusão
 
-GET {{ControleGastos_Api_HostAddress}}/api/totais
+GET {{host}}/api/totais
 Accept: application/json

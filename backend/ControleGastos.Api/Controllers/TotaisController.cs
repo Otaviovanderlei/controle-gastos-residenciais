@@ -39,7 +39,7 @@ namespace ControleGastos.Api.Controllers
                         TotalReceitas = totalReceitas,
                         TotalDespesas = totalDespesas,
 
-                        // O saldo corresponde às receitas menos as despesas.
+                        // O saldo corresponde às receitas .
                         Saldo = totalReceitas - totalDespesas
                     };
                 }).ToList();
@@ -54,7 +54,7 @@ namespace ControleGastos.Api.Controllers
                 TotalGeralReceitas = totalGeralReceitas,
                 TotalGeralDespesas = totalGeralDespesas,
 
-                // Representa o resultado financeiro de todas as pessoas.
+                // Representa o resultado financeiro .
                 SaldoLiquidoGeral =
                     totalGeralReceitas - totalGeralDespesas
             };

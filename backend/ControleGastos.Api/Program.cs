@@ -1,23 +1,19 @@
 using ControleGastos.Api.Data;
 using Microsoft.EntityFrameworkCore;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
+        builder.Configuration.GetConnectionString(
+            "DefaultConnection"
+        )
+    )
+);
 
 builder.Services.AddControllers();
-
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
-
-
-
+builder.Services.AddProblemDetails();
 
 builder.Services.AddCors(options =>
 {
@@ -32,17 +28,17 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+else
+{
+    app.UseExceptionHandler();
+}
 
 app.UseHttpsRedirection();
-
 app.UseCors("Frontend");
-
 app.MapControllers();
 
 app.Run();
-
