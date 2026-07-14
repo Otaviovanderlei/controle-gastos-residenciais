@@ -1,64 +1,111 @@
 @host = http://localhost:5220
 
+# Atualize os identificadores abaixo conforme os registros do seu banco.
+@adultoId = 1
+@menorId = 2
+@transacaoId = 1
 
-##                                         Pessoas
+###                                       PESSOAS
+
+
 
 ### Listar todas as pessoas
+### Resultado esperado: 200 OK
 
 GET {{host}}/api/pessoas
 Accept: application/json
 
 
 ### Cadastrar uma pessoa adulta
+### Resultado esperado: 201 Created
 
 POST {{host}}/api/pessoas
 Content-Type: application/json
 
 {
-  "nome": "Otávio Vanderlei",
-  "idade": 21
+  "nome": "Pessoa Adulta",
+  "idade": 25
 }
 
 
-### Cadastrar uma pessoa menor de idade
+### Cadastrar uma pessoa menor
+### Resultado esperado: 201 Created
 
 POST {{host}}/api/pessoas
 Content-Type: application/json
 
 {
-  "nome": "Lucas",
+  "nome": "Pessoa Menor",
   "idade": 16
 }
 
 
-### Buscar pessoa pelo ID
+### Buscar uma pessoa pelo ID
+### Resultado esperado: 200 OK
 
-GET {{host}}/api/pessoas/1
+GET {{host}}/api/pessoas/{{adultoId}}
 Accept: application/json
 
 
-### Buscar pessoa inexistente
+### Buscar uma pessoa inexistente
+### Resultado esperado: 404 Not Found
 
-GET {{host}}/api/pessoas/999
+GET {{host}}/api/pessoas/999999
 Accept: application/json
 
 
-### Excluir pessoa pelo ID
+### Cadastrar pessoa com nome inválido
+### Resultado esperado: 400 Bad Request
 
-DELETE {{host}}/api/pessoas/1
-Accept: application/json
+POST {{host}}/api/pessoas
+Content-Type: application/json
+
+{
+  "nome": "A",
+  "idade": 25
+}
 
 
-###                                             Transações
+### Cadastrar pessoa com idade inválida
+### Resultado esperado: 400 Bad Request
+
+POST {{host}}/api/pessoas
+Content-Type: application/json
+
+{
+  "nome": "Idade Inválida",
+  "idade": 131
+}
 
 
-### Listar transações
+
+###                                             TRANSAÇÕES
+
+
+
+### Listar todas as transações
+### Resultado esperado: 200 OK
 
 GET {{host}}/api/transacoes
 Accept: application/json
 
 
-### Cadastrar despesa para pessoa adulta
+### Buscar uma transação pelo ID
+### Resultado esperado: 200 OK
+
+GET {{host}}/api/transacoes/{{transacaoId}}
+Accept: application/json
+
+
+### Buscar uma transação inexistente
+### Resultado esperado: 404 Not Found
+
+GET {{host}}/api/transacoes/999999
+Accept: application/json
+
+
+### Cadastrar despesa para uma pessoa adulta
+### Resultado esperado: 201 Created
 
 POST {{host}}/api/transacoes
 Content-Type: application/json
@@ -67,10 +114,12 @@ Content-Type: application/json
   "descricao": "Conta de internet",
   "valor": 120.50,
   "tipo": 1,
-  "pessoaId": 1
+  "pessoaId": {{adultoId}}
 }
 
-### Cadastrar receita para pessoa adulta
+
+### Cadastrar receita para uma pessoa adulta
+### Resultado esperado: 201 Created
 
 POST {{host}}/api/transacoes
 Content-Type: application/json
@@ -79,22 +128,12 @@ Content-Type: application/json
   "descricao": "Salário",
   "valor": 2500,
   "tipo": 2,
-  "pessoaId": 1
+  "pessoaId": {{adultoId}}
 }
 
-### Cadastrar transação para pessoa inexistente
 
-POST {{host}}/api/transacoes
-Content-Type: application/json
-
-{
-  "descricao": "Teste pessoa inexistente",
-  "valor": 100,
-  "tipo": 1,
-  "pessoaId": 999
-}
-
-### Despesa para pessoa menor - deve permitir
+### Cadastrar despesa para uma pessoa menor
+### Resultado esperado: 201 Created
 
 POST {{host}}/api/transacoes
 Content-Type: application/json
@@ -103,10 +142,12 @@ Content-Type: application/json
   "descricao": "Material escolar",
   "valor": 80,
   "tipo": 1,
-  "pessoaId": 2
+  "pessoaId": {{menorId}}
 }
 
-### Receita para pessoa menor - deve bloquear
+
+### Cadastrar receita para uma pessoa menor
+### Resultado esperado: 400 Bad Request
 
 POST {{host}}/api/transacoes
 Content-Type: application/json
@@ -115,26 +156,102 @@ Content-Type: application/json
   "descricao": "Pagamento",
   "valor": 500,
   "tipo": 2,
-  "pessoaId": 2
+  "pessoaId": {{menorId}}
 }
 
-###                                                Totais
+
+### Cadastrar transação para pessoa inexistente
+### Resultado esperado: 400 Bad Request
+
+POST {{host}}/api/transacoes
+Content-Type: application/json
+
+{
+  "descricao": "Pessoa inexistente",
+  "valor": 100,
+  "tipo": 1,
+  "pessoaId": 999999
+}
+
+
+### Cadastrar transação com descrição inválida
+### Resultado esperado: 400 Bad Request
+
+POST {{host}}/api/transacoes
+Content-Type: application/json
+
+{
+  "descricao": "A",
+  "valor": 100,
+  "tipo": 1,
+  "pessoaId": {{adultoId}}
+}
+
+
+### Cadastrar transação com valor zero
+### Resultado esperado: 400 Bad Request
+
+POST {{host}}/api/transacoes
+Content-Type: application/json
+
+{
+  "descricao": "Valor inválido",
+  "valor": 0,
+  "tipo": 1,
+  "pessoaId": {{adultoId}}
+}
+
+
+### Cadastrar transação com tipo inválido
+### Resultado esperado: 400 Bad Request
+
+POST {{host}}/api/transacoes
+Content-Type: application/json
+
+{
+  "descricao": "Tipo inválido",
+  "valor": 100,
+  "tipo": 99,
+  "pessoaId": {{adultoId}}
+}
+
+
+###                                             TOTAIS
+
 
 ### Consultar totais por pessoa e total geral
+### Resultado esperado: 200 OK
 
 GET {{host}}/api/totais
 Accept: application/json
 
-### Excluir pessoa com transações
 
-DELETE {{host}}/api/pessoas/4
+ 
+###                                             EXCLUSÃO EM CASCATA
 
-### Conferir se a transação também foi removida
+
+
+### Excluir uma pessoa e suas transações
+### Cuidado: atualize o ID antes de executar
+### Resultado esperado: 204 No Content
+
+DELETE {{host}}/api/pessoas/{{adultoId}}
+
+
+### Confirmar que a pessoa foi removida
+### Resultado esperado: 404 Not Found
+
+GET {{host}}/api/pessoas/{{adultoId}}
+Accept: application/json
+
+
+### Conferir as transações após a exclusão
 
 GET {{host}}/api/transacoes
 Accept: application/json
 
-### Conferir totais após exclusão
+
+### Conferir os totais após a exclusão
 
 GET {{host}}/api/totais
 Accept: application/json
