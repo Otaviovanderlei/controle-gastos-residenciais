@@ -37,8 +37,15 @@ else
     app.UseExceptionHandler();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("Frontend");
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}

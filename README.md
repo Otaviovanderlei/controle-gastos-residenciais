@@ -261,6 +261,22 @@ Tipos de transação:
 
 ## Validação do projeto
 
+O projeto possui testes de integração com xUnit, `WebApplicationFactory` e SQLite em memória.
+
+Os testes cobrem:
+
+- bloqueio de receitas para menores de idade;
+- permissão de despesas para menores;
+- bloqueio de transação para pessoa inexistente;
+- validação de valores maiores que zero;
+- exclusão em cascata de pessoas e transações;
+- cálculo de receitas, despesas e saldo.
+
+Para executar:
+
+```bash
+cd backend
+dotnet test ControleGastos.Api.Tests/ControleGastos.Api.Tests.csproj
 ### Back-end
 
 ```bash
@@ -292,7 +308,6 @@ npm run build
 
 ## Melhorias futuras
 
-- Adicionar testes automatizados com xUnit
 - Criar pipeline de integração contínua com GitHub Actions
 - Permitir exclusão de transações
 - Extrair regras de negócio do Controller para uma camada de serviço
